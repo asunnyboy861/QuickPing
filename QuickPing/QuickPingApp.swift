@@ -3,11 +3,16 @@ import SwiftUI
 @main
 struct QuickPingApp: App {
     @StateObject private var dataStore = DataStore.shared
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(dataStore)
+            if hasCompletedOnboarding {
+                ContentView()
+                    .environmentObject(dataStore)
+            } else {
+                OnboardingView()
+            }
         }
     }
 }

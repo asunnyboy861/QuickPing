@@ -18,6 +18,40 @@ struct SettingsView: View {
                     LabeledContent("Templates", value: "\(dataStore.templates.count)")
                     LabeledContent("Reminders Sent", value: "\(dataStore.sentReminders.count)")
                 }
+                
+                Section {
+                    NavigationLink(destination: SMSSettingsView()) {
+                        HStack {
+                            Label("SMS Service", systemImage: "message.fill")
+                            Spacer()
+                            if TwilioService.shared.isConfigured {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            } else {
+                                Image(systemName: "circle")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    
+                    NavigationLink(destination: EmailSettingsView()) {
+                        HStack {
+                            Label("Email Service", systemImage: "envelope.fill")
+                            Spacer()
+                            if SendGridService.shared.isConfigured {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            } else {
+                                Image(systemName: "circle")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Services")
+                } footer: {
+                    Text("Configure SMS and Email services to send reminders through these channels.")
+                }
 
                 Section {
                     NavigationLink(destination: SupportView()) {
@@ -44,6 +78,117 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
         }
+    }
+}
+
+struct SMSSettingsView: View {
+    @State private var accountSID = ""
+    @State private var authToken = ""
+    @State private var fromNumber = ""
+    @State private var showSuccess = false
+    
+    var body: some View {
+        Form {
+            Section {
+                TextField("Account SID", text: $accountSID)
+                    .textContentType(.username)
+                    .autocapitalization(.none)
+                
+                SecureField("Auth Token", text: $authToken)
+                    .textContentType(.password)
+                
+                TextField("From Number", text: $fromNumber)
+                    .keyboardType(.phonePad)
+                    .textContentType(.telephoneNumber)
+            } header: {
+                Text("Twilio Credentials")
+            } footer: {
+                Text("Get your credentials from twilio.com/console")
+            }
+            
+            Section {
+                Button("Save Configuration") {
+                    TwilioService.shared.configure(
+                        accountSID: accountSID,
+                        authToken: authToken,
+                        fromNumber: fromNumber
+                    )
+                    showSuccess = true
+                }
+                .disabled(accountSID.isEmpty || authToken.isEmpty || fromNumber.isEmpty)
+            }
+        }
+        .navigationTitle("SMS Service")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Saved", isPresented: $showSuccess) {
+            Button("OK") { }
+        } message: {
+            Text("SMS service has been configured successfully.")
+        }
+        .onAppear {
+            loadConfiguration()
+        }
+    }
+    
+    private func loadConfiguration() {
+        accountSID = UserDefaults.standard.string(forKey: "twilio_account_sid") ?? ""
+        authToken = UserDefaults.standard.string(forKey: "twilio_auth_token") ?? ""
+        fromNumber = UserDefaults.standard.string(forKey: "twilio_from_number") ?? ""
+    }
+}
+
+struct EmailSettingsView: View {
+    @State private var apiKey = ""
+    @State private var fromEmail = ""
+    @State private var fromName = "QuickPing"
+    @State private var showSuccess = false
+    
+    var body: some View {
+        Form {
+            Section {
+                SecureField("API Key", text: $apiKey)
+                    .textContentType(.password)
+                
+                TextField("From Email", text: $fromEmail)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
+                    .autocapitalization(.none)
+                
+                TextField("From Name", text: $fromName)
+            } header: {
+                Text("SendGrid Configuration")
+            } footer: {
+                Text("Get your API key from app.sendgrid.com")
+            }
+            
+            Section {
+                Button("Save Configuration") {
+                    SendGridService.shared.configure(
+                        apiKey: apiKey,
+                        fromEmail: fromEmail,
+                        fromName: fromName
+                    )
+                    showSuccess = true
+                }
+                .disabled(apiKey.isEmpty || fromEmail.isEmpty)
+            }
+        }
+        .navigationTitle("Email Service")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Saved", isPresented: $showSuccess) {
+            Button("OK") { }
+        } message: {
+            Text("Email service has been configured successfully.")
+        }
+        .onAppear {
+            loadConfiguration()
+        }
+    }
+    
+    private func loadConfiguration() {
+        apiKey = UserDefaults.standard.string(forKey: "sendgrid_api_key") ?? ""
+        fromEmail = UserDefaults.standard.string(forKey: "sendgrid_from_email") ?? ""
+        fromName = UserDefaults.standard.string(forKey: "sendgrid_from_name") ?? "QuickPing"
     }
 }
 

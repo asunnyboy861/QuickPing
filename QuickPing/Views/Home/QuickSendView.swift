@@ -143,11 +143,24 @@ struct QuickSendView: View {
                 ForEach(SendChannel.allCases) { channel in
                     ChannelButton(
                         channel: channel,
-                        isSelected: viewModel.selectedChannel == channel
+                        isSelected: viewModel.selectedChannel == channel,
+                        isConfigured: viewModel.isChannelConfigured
                     ) {
                         viewModel.selectedChannel = channel
                     }
                 }
+            }
+            
+            if !viewModel.isChannelConfigured && viewModel.selectedChannel != .notification {
+                HStack(spacing: DesignTokens.smallSpacing) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    
+                    Text("\(viewModel.selectedChannel.rawValue) service is not configured. Go to Settings to configure.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, DesignTokens.smallSpacing)
             }
         }
     }
@@ -197,6 +210,7 @@ struct TemplateSelectionRow: View {
 struct ChannelButton: View {
     let channel: SendChannel
     let isSelected: Bool
+    let isConfigured: Bool
     let action: () -> Void
 
     var body: some View {
@@ -212,6 +226,7 @@ struct ChannelButton: View {
             .foregroundStyle(isSelected ? .white : Color.appPrimary)
             .background(isSelected ? Color.appPrimary : Color.appPrimary.opacity(0.1))
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cornerRadius))
+            .opacity(channel == .notification || isConfigured ? 1.0 : 0.5)
         }
     }
 }

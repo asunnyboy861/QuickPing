@@ -3,16 +3,30 @@ import SwiftUI
 struct ContactsListView: View {
     @StateObject private var viewModel = ContactsViewModel()
     @State private var showAddSheet = false
+    @State private var showImportSheet = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if viewModel.contacts.isEmpty {
-                    EmptyStateView(
-                        icon: "person.2",
-                        title: "No Contacts",
-                        subtitle: "Add your first contact to start sending reminders."
-                    )
+                    VStack(spacing: DesignTokens.spacing * 2) {
+                        EmptyStateView(
+                            icon: "person.2",
+                            title: "No Contacts",
+                            subtitle: "Add your first contact to start sending reminders."
+                        )
+                        
+                        VStack(spacing: DesignTokens.spacing) {
+                            PrimaryButton(title: "Import from Contacts", icon: "arrow.down.circle.fill") {
+                                showImportSheet = true
+                            }
+                            
+                            SecondaryButton(title: "Add Manually", icon: "plus.circle") {
+                                showAddSheet = true
+                            }
+                        }
+                        .padding(.horizontal, DesignTokens.spacing * 2)
+                    }
                 } else {
                     List {
                         ForEach(viewModel.filteredContacts) { contact in
@@ -35,7 +49,15 @@ struct ContactsListView: View {
             .navigationTitle("Contacts")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showAddSheet = true }) {
+                    Menu {
+                        Button(action: { showImportSheet = true }) {
+                            Label("Import from Contacts", systemImage: "arrow.down.circle")
+                        }
+                        
+                        Button(action: { showAddSheet = true }) {
+                            Label("Add Manually", systemImage: "plus")
+                        }
+                    } label: {
                         Image(systemName: "plus")
                     }
                 }
@@ -44,6 +66,9 @@ struct ContactsListView: View {
                 ContactFormView(mode: .add) { contact in
                     viewModel.addContact(contact)
                 }
+            }
+            .sheet(isPresented: $showImportSheet) {
+                ContactsImportView()
             }
             .onAppear {
                 viewModel.loadContacts()
