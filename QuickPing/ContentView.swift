@@ -37,8 +37,3 @@ struct ContentView: View {
         }
     }
 }
-
-#Preview {
-    ContentView()
-        .environmentObject(DataStore.shared)
-}
